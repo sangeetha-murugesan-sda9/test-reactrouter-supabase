@@ -1,5 +1,5 @@
 -- =============================================
--- Brands table (team-scoped)
+-- Brands table 
 -- =============================================
 
 create table public.brands (
