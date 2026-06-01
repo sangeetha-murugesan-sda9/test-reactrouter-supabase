@@ -34,3 +34,22 @@ INSERT INTO public.template_locales
   (id, template_id, locale, last_render_url, thumbnail_url, created_at, updated_at)
 VALUES 
   ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'en', NULL, '/product-launch-thumbnail.png', NOW(), NOW());
+-- Brands (sample data for template filtering)
+INSERT INTO public.brands
+  (id, team_id, name, slug, logo_url, created_at, updated_at)
+VALUES
+  (
+    '770e8400-e29b-41d4-a716-446655440001',
+    '5e44edd3-df5d-4ff1-84f4-0ca7d7ba1704',
+    'Vio Ljusfabrik',
+    'vio-ljusfabrik',
+    NULL,
+    NOW(),
+    NOW()
+  );
+
+UPDATE public.templates
+SET brand_id = '770e8400-e29b-41d4-a716-446655440001'
+WHERE id = '550e8400-e29b-41d4-a716-446655440001';
+
+
