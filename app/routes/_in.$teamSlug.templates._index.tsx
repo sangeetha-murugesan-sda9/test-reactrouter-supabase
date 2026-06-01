@@ -12,7 +12,6 @@ import {
   getSupportedLocaleName,
 } from '~/services/locales';
 import { appService } from '~/services/app';
-import { BrandSelector } from '~/components/brands/BrandSelector';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import type { BrandSummary, TemplateWithLocalesAndBrand } from '~/types/global';
@@ -174,7 +173,7 @@ function formatTemplateDuration(template: TemplateWithLocalesAndBrand) {
 export default function TemplatesPage() {
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { user, team, brands, selectedBrandSlug, templates } =
+  const { user, team, selectedBrandSlug, templates } =
     useLoaderData<typeof loader>();
 
   const isLoading = navigation.state === 'loading';
@@ -194,8 +193,6 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-6">
-      <BrandSelector brands={brands} selectedBrandSlug={selectedBrandSlug} />
-
       {isLoading && (
         <p className="text-sm text-muted-foreground">Loading templates...</p>
       )}

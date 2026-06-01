@@ -1,12 +1,25 @@
-import { useNavigate, useParams } from 'react-router';
-import { Button } from '~/components/ui/button';
-import { Bell, Settings, LogOut } from 'lucide-react';
 import { useEffect } from 'react';
+import { Bell, LogOut, Settings } from 'lucide-react';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useRouteLoaderData,
+} from 'react-router';
+
+import { BrandSelector } from '~/components/brands/BrandSelector';
+import { Button } from '~/components/ui/button';
 import { createSupabaseBrowserClient } from '~/services/supabase.client';
+import type { loader as templatesLoader } from '~/routes/_in.$teamSlug.templates._index';
 
 export function TopBar() {
+  const location = useLocation();
   const navigate = useNavigate();
   const params = useParams();
+  const isTemplatesIndex = /\/templates\/?$/.test(location.pathname);
+  const templatesData = useRouteLoaderData<typeof templatesLoader>(
+    'routes/_in.$teamSlug.templates._index'
+  );
 
   // Fetch user's teams
   useEffect(() => {
@@ -55,9 +68,15 @@ export function TopBar() {
 
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
-      <div className="flex items-center gap-4"></div>
+      <div className="flex items-center gap-4" />
 
       <div className="flex items-center gap-3">
+        {isTemplatesIndex && templatesData && (
+          <BrandSelector
+            brands={templatesData.brands}
+            selectedBrandSlug={templatesData.selectedBrandSlug}
+          />
+        )}
         <Button variant="ghost" size="icon">
           <Bell className="h-4 w-4" />
         </Button>
