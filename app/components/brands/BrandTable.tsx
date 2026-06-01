@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { Link, useFetcher } from 'react-router';
 import { Pencil, Trash2 } from 'lucide-react';
 
@@ -11,6 +12,19 @@ interface BrandTableProps {
 
 interface BrandActionData {
   error?: string;
+}
+
+function handleDeleteClick(
+  event: MouseEvent<HTMLButtonElement>,
+  brandName: string
+) {
+  if (
+    !window.confirm(
+      `Are you sure you want to delete "${brandName}"? This action cannot be undone.`
+    )
+  ) {
+    event.preventDefault();
+  }
 }
 
 export function BrandTable({ brands, teamSlug }: BrandTableProps) {
@@ -78,6 +92,7 @@ export function BrandTable({ brands, teamSlug }: BrandTableProps) {
                       type="submit"
                       variant="destructive"
                       size="sm"
+                      onClick={event => handleDeleteClick(event, brand.name)}
                       disabled={
                         fetcher.state !== 'idle' && deletingId === brand.id
                       }

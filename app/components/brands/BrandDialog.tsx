@@ -40,7 +40,23 @@ export function BrandDialog({ brands, teamSlug }: BrandDialogProps) {
   const error = fetcher.data?.error;
 
   if (isEdit && !editingBrand) {
-    return null;
+    return (
+      <Dialog open>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Brand not found</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground" role="alert">
+            This brand does not exist or may have been deleted.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" asChild>
+              <Link to={closeHref}>Back to brands</Link>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   return (
