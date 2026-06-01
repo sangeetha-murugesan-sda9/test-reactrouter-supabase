@@ -283,7 +283,7 @@ export default function TemplatesPage() {
           <p className="mb-2 text-lg text-foreground">No templates found</p>
           <p className="text-muted-foreground">
             {hasSelectedBrand
-              ? 'No templates for this brand yet.'
+              ? 'No templates for this brand yet. Try a different brand filter or clear the filter.'
               : selectedBrandSlug
                 ? 'Try a different brand filter or clear the filter.'
                 : 'Create a new template to get started.'}

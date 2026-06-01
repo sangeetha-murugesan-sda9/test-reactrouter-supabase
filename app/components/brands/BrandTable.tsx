@@ -14,10 +14,7 @@ interface BrandActionData {
   error?: string;
 }
 
-function handleDeleteClick(
-  event: MouseEvent<HTMLButtonElement>,
-  brandName: string
-) {
+function handleDeleteClick(event: MouseEvent, brandName: string) {
   if (
     !window.confirm(
       `Are you sure you want to delete "${brandName}"? This action cannot be undone.`
