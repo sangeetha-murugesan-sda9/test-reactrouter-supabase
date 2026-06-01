@@ -173,10 +173,13 @@ function formatTemplateDuration(template: TemplateWithLocalesAndBrand) {
 export default function TemplatesPage() {
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { user, team, selectedBrandSlug, templates } =
+  const { user, team, brands, selectedBrandSlug, templates } =
     useLoaderData<typeof loader>();
 
   const isLoading = navigation.state === 'loading';
+  const hasSelectedBrand =
+    selectedBrandSlug !== null &&
+    brands.some(brand => brand.slug === selectedBrandSlug);
 
   function handleTemplateClick(templateId: string) {
     const template = templates.find(item => item.id === templateId);
@@ -279,9 +282,11 @@ export default function TemplatesPage() {
           <Globe className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
           <p className="mb-2 text-lg text-foreground">No templates found</p>
           <p className="text-muted-foreground">
-            {selectedBrandSlug
-              ? 'Try a different brand filter or clear the filter.'
-              : 'Create a new template to get started.'}
+            {hasSelectedBrand
+              ? 'No templates for this brand yet.'
+              : selectedBrandSlug
+                ? 'Try a different brand filter or clear the filter.'
+                : 'Create a new template to get started.'}
           </p>
         </div>
       )}
