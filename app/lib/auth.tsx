@@ -18,12 +18,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then((result: { data: { session: Session | null } }) => {
-      const session = result.data.session;
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then((result: { data: { session: Session | null } }) => {
+        const session = result.data.session;
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
 
     // Listen for auth changes
     const {
