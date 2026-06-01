@@ -1,8 +1,9 @@
 import { Link, useParams } from 'react-router';
+import { Tag, Video } from 'lucide-react';
+
 import { Button } from '~/components/ui/button';
-import { Video } from 'lucide-react';
-import packageJson from '../../../package.json';
 import { useAuth } from '~/lib/auth';
+import packageJson from '../../../package.json';
 
 interface SidebarProps {
   currentPath: string;
@@ -14,7 +15,6 @@ export function Sidebar({ currentPath }: SidebarProps) {
   const { user } = useAuth();
 
   const isActive = (path: string) => {
-    // Remove the team slug from the current path for comparison
     const pathWithoutTeamSlug = currentPath.replace(`/${teamSlug}`, '');
     if (pathWithoutTeamSlug.startsWith(path)) return true;
     return false;
@@ -42,10 +42,20 @@ export function Sidebar({ currentPath }: SidebarProps) {
               Templates
             </Link>
           </Button>
+
+          <Button
+            variant={isActive('/brands') ? 'default' : 'ghost'}
+            className="w-full justify-start gap-3"
+            asChild
+          >
+            <Link to={`/${teamSlug}/brands`}>
+              <Tag className="h-4 w-4" />
+              Brands
+            </Link>
+          </Button>
         </div>
       </nav>
 
-      {/* Footer */}
       <div className="p-4 border-t border-border">
         <div className="text-xs text-muted-foreground space-y-1">
           {user?.email && <div className="truncate">{user.email}</div>}

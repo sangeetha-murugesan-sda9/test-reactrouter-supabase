@@ -58,14 +58,8 @@ export function handleActionError(error: unknown): ErrorResponse {
   let status = 500;
 
   if (error instanceof Response) {
-    try {
-      const errorData = JSON.parse(error.body as string);
-      message = errorData.error || error.statusText || message;
-      status = error.status;
-    } catch {
-      message = error.statusText || message;
-      status = error.status;
-    }
+    message = error.statusText || message;
+    status = error.status;
   } else if (error instanceof Error) {
     message = error.message;
   } else if (typeof error === 'string') {

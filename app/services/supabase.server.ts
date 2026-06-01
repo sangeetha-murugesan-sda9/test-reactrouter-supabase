@@ -2,8 +2,23 @@ import {
   createServerClient,
   parseCookieHeader,
   serializeCookieHeader,
+  type CookieOptions,
 } from '@supabase/ssr';
+import ws from 'ws';
+
+import type { SupabaseClientOptions } from '@supabase/supabase-js';
+
 import type { Database } from '~/types/supabase';
+
+type RealtimeTransport = NonNullable<
+  NonNullable<SupabaseClientOptions<Database>['realtime']>['transport']
+>;
+
+interface ServerCookieToSet {
+  name: string;
+  value: string;
+  options: CookieOptions;
+}
 
 export const createSupabaseServerClient = (
   request: Request,
@@ -34,7 +49,7 @@ export const createSupabaseServerClient = (
             value: string;
           }[];
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: ServerCookieToSet[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
             headers.append(
               'Set-Cookie',
@@ -49,6 +64,9 @@ export const createSupabaseServerClient = (
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: false,
+      },
+      realtime: {
+        transport: ws as unknown as RealtimeTransport,
       },
     }
   );

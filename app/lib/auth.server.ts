@@ -83,9 +83,14 @@ export async function ensureUserProfile(
       .from('user_profiles')
       .insert({
         id: user.id,
-        email: user.email || '',
-        full_name: user.user_metadata?.full_name || '',
-        avatar_url: user.user_metadata?.avatar_url || '',
+        full_name:
+          typeof user.user_metadata?.full_name === 'string'
+            ? user.user_metadata.full_name
+            : '',
+        avatar_url:
+          typeof user.user_metadata?.avatar_url === 'string'
+            ? user.user_metadata.avatar_url
+            : '',
       });
 
     if (profileError) {

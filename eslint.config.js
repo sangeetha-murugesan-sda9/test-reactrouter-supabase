@@ -40,6 +40,7 @@ export default [
         Headers: 'readonly',
         HTMLDivElement: 'readonly',
         HTMLInputElement: 'readonly',
+        HTMLButtonElement: 'readonly',
         URL: 'readonly',
         File: 'readonly',
         React: 'readonly',
@@ -52,6 +53,7 @@ export default [
         module: 'readonly',
         require: 'readonly',
         exports: 'readonly',
+        URLSearchParams: 'readonly',
       },
     },
     plugins: {
@@ -97,6 +99,17 @@ export default [
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     ...prettierConfig,
+  },
+  {
+    files: [
+      'app/routes/**',
+      'app/root.tsx',
+      'app/lib/auth.tsx',
+      'app/components/ui/**',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   },
   {
     ignores: [

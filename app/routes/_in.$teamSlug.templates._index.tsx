@@ -1,15 +1,20 @@
-import { useState } from 'react';
-import { useNavigate, useLoaderData, type MetaFunction } from 'react-router';
-import { requireAuthWithClient, ensureUserProfile } from '../lib/auth.server';
-import type { TemplateWithLocales } from '../types/global';
+import {
+  useNavigate,
+  useLoaderData,
+  useNavigation,
+  type MetaFunction,
+} from 'react-router';
+import { Clock, Globe, Play } from 'lucide-react';
+
+import { requireAuthWithClient, ensureUserProfile } from '~/lib/auth.server';
 import {
   getSupportedLocaleFlag,
   getSupportedLocaleName,
-} from '../services/locales';
+} from '~/services/locales';
 import { appService } from '~/services/app';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
-import { Play, Globe, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import type { BrandSummary, TemplateWithLocalesAndBrand } from '~/types/global';
 
 export const meta: MetaFunction = () => {
   return [{ title: `Video Templates - ${appService.strings.app.title}` }];
@@ -24,14 +29,12 @@ export async function loader({
 }) {
   const { user, supabaseClient } = await requireAuthWithClient(request);
 
-  // Ensure user has a profile
   try {
     await ensureUserProfile(user, request);
   } catch {
-    // Continue anyway, the profile creation might have failed but we can still show templates
+    // Continue if profile creation fails
   }
 
-  // Get team by slug
   const { data: team, error: teamError } = await supabaseClient
     .from('teams')
     .select('id, name, slug')
@@ -42,7 +45,6 @@ export async function loader({
     throw new Error('Team not found');
   }
 
-  // Verify user is a member of this team
   const { data: teamMember, error: memberError } = await supabaseClient
     .from('team_members')
     .select('role')
@@ -54,53 +56,104 @@ export async function loader({
     throw new Error('Access denied: You are not a member of this team');
   }
 
-  // Build query for templates
-  const templatesQuery = supabaseClient
-    .from('templates')
-    .select(
-      `
-      *,
-      template_locales (
-        id,
-        locale,
-        last_render_url,
-        thumbnail_url,
-        created_at,
-        template_id,
-        updated_at
-      )
-    `
-    )
-    .eq('team_id', team.id);
+  const url = new URL(request.url);
+  const brandSlug = url.searchParams.get('brand');
 
-  const { data: templates, error } = await templatesQuery.order('created_at', {
-    ascending: false,
-  });
+  const { data: brands, error: brandsError } = await supabaseClient
+    .from('brands')
+    .select('id, name, slug, logo_url')
+    .eq('team_id', team.id)
+    .order('name', { ascending: true });
+
+  if (brandsError) {
+    throw new Error('Failed to load brands');
+  }
+
+  const brandList = (brands ?? []) as BrandSummary[];
+
+  const templateSelect = `
+    *,
+    template_locales (
+      id,
+      locale,
+      last_render_url,
+      thumbnail_url,
+      created_at,
+      template_id,
+      updated_at
+    ),
+    brands (
+      id,
+      name,
+      slug,
+      logo_url
+    )
+  `;
+
+  if (brandSlug) {
+    const selectedBrand = brandList.find(brand => brand.slug === brandSlug);
+
+    if (!selectedBrand) {
+      return {
+        user,
+        team,
+        brands: brandList,
+        selectedBrandSlug: brandSlug,
+        templates: [] as TemplateWithLocalesAndBrand[],
+      };
+    }
+
+    const { data: templates, error } = await supabaseClient
+      .from('templates')
+      .select(templateSelect)
+      .eq('team_id', team.id)
+      .eq('brand_id', selectedBrand.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error('Failed to load templates');
+    }
+
+    return {
+      user,
+      team,
+      brands: brandList,
+      selectedBrandSlug: brandSlug,
+      templates: (templates ?? []) as TemplateWithLocalesAndBrand[],
+    };
+  }
+
+  const { data: templates, error } = await supabaseClient
+    .from('templates')
+    .select(templateSelect)
+    .eq('team_id', team.id)
+    .order('created_at', { ascending: false });
 
   if (error) {
     throw new Error('Failed to load templates');
   }
 
-  return { user, team, templates: templates || [] };
+  return {
+    user,
+    team,
+    brands: brandList,
+    selectedBrandSlug: null,
+    templates: (templates ?? []) as TemplateWithLocalesAndBrand[],
+  };
 }
 
-// Helper function to get template status based on locales
 function getTemplateStatus(
-  template: TemplateWithLocales
+  template: TemplateWithLocalesAndBrand
 ): 'completed' | 'in-progress' | 'draft' {
-  const locales = template.template_locales || [];
+  const locales = template.template_locales ?? [];
   if (locales.length === 0) return 'draft';
-  if (
-    locales.some(
-      (locale: { last_render_url?: string }) => locale.last_render_url
-    )
-  )
-    return 'completed';
+  if (locales.some(locale => locale.last_render_url)) return 'completed';
   return 'in-progress';
 }
 
-function formatTemplateDuration(template: TemplateWithLocales) {
+function formatTemplateDuration(template: TemplateWithLocalesAndBrand) {
   if (!template.duration || template.duration === 0) return '--:--';
+
   const totalSeconds = Math.floor(template.duration / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -112,126 +165,111 @@ function formatTemplateDuration(template: TemplateWithLocales) {
 
   if (hours > 0) {
     return `${hours}:${pad(minutes)}:${pad(seconds)}`;
-  } else {
-    return `${minutes}:${pad(seconds)}`;
   }
-}
 
-// Locale data is now provided by the locales service
+  return `${minutes}:${pad(seconds)}`;
+}
 
 export default function TemplatesPage() {
   const navigate = useNavigate();
-  const { user, team, templates } = useLoaderData<typeof loader>();
-  const [searchQuery] = useState('');
+  const navigation = useNavigation();
+  const { user, team, brands, selectedBrandSlug, templates } =
+    useLoaderData<typeof loader>();
 
-  const filteredTemplates = templates.filter(template =>
-    template.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const isLoading = navigation.state === 'loading';
+  const hasSelectedBrand =
+    selectedBrandSlug !== null &&
+    brands.some(brand => brand.slug === selectedBrandSlug);
 
-  const getStatusColor = (status: 'completed' | 'in-progress' | 'draft') => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'in-progress':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'draft':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  function handleTemplateClick(templateId: string) {
+    const template = templates.find(item => item.id === templateId);
 
-  const handleTemplateClick = (templateId: string) => {
-    // Navigate to the first locale's edit page
-    const template = templates.find(t => t.id === templateId);
     if (template?.template_locales?.[0]) {
       navigate(
         `/${team.slug}/templates/${templateId}/${template.template_locales[0].locale}/edit`
       );
-    } else {
-      // If no locales, navigate to the first available locale (usually 'en')
-      navigate(`/${team.slug}/templates/${templateId}/en/edit`);
+      return;
     }
-  };
+
+    navigate(`/${team.slug}/templates/${templateId}/en/edit`);
+  }
+
   return (
     <div className="space-y-6">
-      {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredTemplates.map((template, index) => (
+      {isLoading && (
+        <p className="text-sm text-muted-foreground">Loading templates...</p>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {templates.map((template, index) => (
           <Card
             key={template.id}
-            className="cursor-pointer hover:shadow-xl transition-all duration-300 group hover:-translate-y-1 animate-in slide-in-from-bottom-4"
+            className="group cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
             style={{ animationDelay: `${index * 50}ms` }}
             onClick={() => handleTemplateClick(template.id)}
           >
             <CardHeader className="p-0">
               <div className="relative overflow-hidden rounded-t-lg">
                 <img
-                  src={
-                    template.thumbnail_url
-                      ? template.thumbnail_url
-                      : '/video-placeholder.svg'
-                  }
+                  src={template.thumbnail_url ?? '/video_placeholder.svg'}
                   alt={template.title}
-                  className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 rounded-t-lg flex items-center justify-center">
-                  <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-90 transition-all duration-300 transform scale-75 group-hover:scale-100" />
+                <div className="absolute inset-0 flex items-center justify-center rounded-t-lg bg-black/0 transition-all duration-300 group-hover:bg-black/20">
+                  <Play className="h-12 w-12 scale-75 text-white opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-90" />
                 </div>
-                <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-sm backdrop-blur-sm">
+                <div className="absolute right-2 bottom-2 rounded bg-black/70 px-2 py-1 text-sm text-white backdrop-blur-sm">
                   {formatTemplateDuration(template)}
                 </div>
                 <Badge
-                  className={`absolute top-2 left-2 ${getStatusColor(getTemplateStatus(template))} backdrop-blur-sm`}
-                  variant="outline"
+                  className="absolute top-2 left-2 backdrop-blur-sm"
+                  variant="secondary"
                 >
                   {getTemplateStatus(template).replace('-', ' ')}
                 </Badge>
               </div>
             </CardHeader>
+
             <CardContent className="p-4">
-              <CardTitle className="text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors duration-200">
+              <CardTitle className="mb-2 line-clamp-2 text-lg transition-colors duration-200 group-hover:text-primary">
                 {template.title}
               </CardTitle>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+
+              {template.brands && (
+                <p className="mb-2 text-sm text-muted-foreground">
+                  Brand: {template.brands.name}
+                </p>
+              )}
+
+              <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4" />
                 <span suppressHydrationWarning>
-                  Created{' '}
-                  {new Date(template.created_at || '').toLocaleDateString()}
+                  Created {new Date(template.created_at).toLocaleDateString()}
                 </span>
                 {template.creator_user_id !== user.id && (
-                  <span className="text-xs bg-muted px-2 py-1 rounded">
+                  <span className="rounded bg-muted px-2 py-1 text-xs">
                     Shared
                   </span>
                 )}
               </div>
 
-              {/* Locales */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Globe className="h-4 w-4" />
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {template.template_locales?.map(
-                    (
-                      locale: { id: string; locale: string },
-                      localeIndex: number
-                    ) => (
-                      <Badge
-                        key={locale.id}
-                        variant="secondary"
-                        className="text-xs transition-all duration-200 hover:scale-105 animate-in slide-in-from-left-2"
-                        style={{
-                          animationDelay: `${index * 50 + localeIndex * 25}ms`,
-                        }}
-                      >
-                        <span className="mr-1">
-                          {getSupportedLocaleFlag(locale.locale)}
-                        </span>
-                        {getSupportedLocaleName(locale.locale)}
-                      </Badge>
-                    )
-                  )}
+                  {template.template_locales?.map(locale => (
+                    <Badge
+                      key={locale.id}
+                      variant="secondary"
+                      className="text-xs"
+                    >
+                      <span className="mr-1">
+                        {getSupportedLocaleFlag(locale.locale)}
+                      </span>
+                      {getSupportedLocaleName(locale.locale)}
+                    </Badge>
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -239,13 +277,17 @@ export default function TemplatesPage() {
         ))}
       </div>
 
-      {filteredTemplates.length === 0 && (
-        <div className="text-center py-12 animate-in fade-in-50 slide-in-from-bottom-4">
-          <div className="text-muted-foreground">
-            <Globe className="h-12 w-12 mx-auto mb-4 opacity-50 animate-pulse" />
-            <p className="text-lg mb-2">No templates found</p>
-            <p>Try adjusting your search or create a new template</p>
-          </div>
+      {templates.length === 0 && (
+        <div className="py-12 text-center">
+          <Globe className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
+          <p className="mb-2 text-lg text-foreground">No templates found</p>
+          <p className="text-muted-foreground">
+            {hasSelectedBrand
+              ? 'No templates for this brand yet. Try a different brand filter or clear the filter.'
+              : selectedBrandSlug
+                ? 'Try a different brand filter or clear the filter.'
+                : 'Create a new template to get started.'}
+          </p>
         </div>
       )}
     </div>

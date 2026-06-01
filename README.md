@@ -95,3 +95,18 @@ Notes:
 - React Router v7 Framework contains helpers for URL parameters.
 
 Submit your code as a [PR in a forked, private repo](#development-workflow). Good luck!
+
+## 🧩 Solution - Screen Shots Brand CRUD and Brand Selector
+
+### Brand Selector page 
+![Brand List](./screenshots/BrandSelector.png)
+
+### CRUD Brand
+![Create,Read,Update,Delete Brand](./screenshots/CRUD_Brand.png)
+
+### Templates
+![Templates](./screenshots/Templates.png)
+
+### Supabase DB
+![Supabase Database](./screenshots/Supabase_DB_Screenshot.png)
+

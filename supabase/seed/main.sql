@@ -26,11 +26,102 @@ VALUES
 -- Templates
 INSERT INTO public.templates
   (id, title, description, team_id, creator_user_id, thumbnail_url, duration, created_at, updated_at)
-VALUES 
-  ('550e8400-e29b-41d4-a716-446655440001', 'Video Template 1', 'Example product video', '5e44edd3-df5d-4ff1-84f4-0ca7d7ba1704', '813b6b64-f5f4-49ea-9719-c49db026d937', '/video_placeholder.svg', 12110, NOW(), NOW());
+VALUES
+  (
+    '550e8400-e29b-41d4-a716-446655440001',
+    'Video Template 1',
+    'Example product video',
+    '5e44edd3-df5d-4ff1-84f4-0ca7d7ba1704',
+    '813b6b64-f5f4-49ea-9719-c49db026d937',
+    '/video_placeholder.svg',
+    12110,
+    NOW(),
+    NOW()
+  ),
+  (
+    '550e8400-e29b-41d4-a716-446655440002',
+    'Video Template 2',
+    'Example brand campaign video',
+    '5e44edd3-df5d-4ff1-84f4-0ca7d7ba1704',
+    '813b6b64-f5f4-49ea-9719-c49db026d937',
+    '/video_placeholder.svg',
+    9000,
+    NOW(),
+    NOW()
+  ),
+  (
+    '550e8400-e29b-41d4-a716-446655440003',
+    'Unbranded Template',
+    'Template with no brand assigned',
+    '5e44edd3-df5d-4ff1-84f4-0ca7d7ba1704',
+    '813b6b64-f5f4-49ea-9719-c49db026d937',
+    '/video_placeholder.svg',
+    5000,
+    NOW(),
+    NOW()
+  );
 
--- template locales
+-- Template locales
 INSERT INTO public.template_locales
   (id, template_id, locale, last_render_url, thumbnail_url, created_at, updated_at)
-VALUES 
-  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'en', NULL, '/product-launch-thumbnail.png', NOW(), NOW());
+VALUES
+  (
+    '660e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440001',
+    'en',
+    NULL,
+    '/product-launch-thumbnail.png',
+    NOW(),
+    NOW()
+  ),
+  (
+    '660e8400-e29b-41d4-a716-446655440002',
+    '550e8400-e29b-41d4-a716-446655440002',
+    'en',
+    NULL,
+    '/product-launch-thumbnail.png',
+    NOW(),
+    NOW()
+  ),
+  (
+    '660e8400-e29b-41d4-a716-446655440003',
+    '550e8400-e29b-41d4-a716-446655440003',
+    'en',
+    NULL,
+    '/video_placeholder.svg',
+    NOW(),
+    NOW()
+  );
+
+-- Brands (sample data for template filtering)
+INSERT INTO public.brands
+  (id, team_id, name, slug, logo_url, created_at, updated_at)
+VALUES
+  (
+    '770e8400-e29b-41d4-a716-446655440001',
+    '5e44edd3-df5d-4ff1-84f4-0ca7d7ba1704',
+    'Vio Ljusfabrik',
+    'vio-ljusfabrik',
+    NULL,
+    NOW(),
+    NOW()
+  ),
+  (
+    '770e8400-e29b-41d4-a716-446655440002',
+    '5e44edd3-df5d-4ff1-84f4-0ca7d7ba1704',
+    'Lindells Bil',
+    'lindells-bil',
+    NULL,
+    NOW(),
+    NOW()
+  );
+
+UPDATE public.templates
+SET brand_id = '770e8400-e29b-41d4-a716-446655440001'
+WHERE id = '550e8400-e29b-41d4-a716-446655440001';
+
+UPDATE public.templates
+SET brand_id = '770e8400-e29b-41d4-a716-446655440002'
+WHERE id = '550e8400-e29b-41d4-a716-446655440002';
+
+
