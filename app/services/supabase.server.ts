@@ -3,6 +3,8 @@ import {
   parseCookieHeader,
   serializeCookieHeader,
 } from '@supabase/ssr';
+import ws from 'ws';
+
 import type { Database } from '~/types/supabase';
 
 export const createSupabaseServerClient = (
@@ -49,6 +51,9 @@ export const createSupabaseServerClient = (
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: false,
+      },
+      realtime: {
+        transport: ws,
       },
     }
   );

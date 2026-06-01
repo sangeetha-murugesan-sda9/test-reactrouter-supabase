@@ -1,4 +1,9 @@
-import { useNavigate, useLoaderData, useNavigation, type MetaFunction } from 'react-router';
+import {
+  useNavigate,
+  useLoaderData,
+  useNavigation,
+  type MetaFunction,
+} from 'react-router';
 import { Clock, Globe, Play } from 'lucide-react';
 
 import { requireAuthWithClient, ensureUserProfile } from '~/lib/auth.server';
@@ -10,10 +15,7 @@ import { appService } from '~/services/app';
 import { BrandSelector } from '~/components/brands/BrandSelector';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import type {
-  BrandSummary,
-  TemplateWithLocalesAndBrand,
-} from '~/types/global';
+import type { BrandSummary, TemplateWithLocalesAndBrand } from '~/types/global';
 
 export const meta: MetaFunction = () => {
   return [{ title: `Video Templates - ${appService.strings.app.title}` }];
@@ -219,7 +221,10 @@ export default function TemplatesPage() {
                 <div className="absolute right-2 bottom-2 rounded bg-black/70 px-2 py-1 text-sm text-white backdrop-blur-sm">
                   {formatTemplateDuration(template)}
                 </div>
-                <Badge className="absolute top-2 left-2 backdrop-blur-sm" variant="secondary">
+                <Badge
+                  className="absolute top-2 left-2 backdrop-blur-sm"
+                  variant="secondary"
+                >
                   {getTemplateStatus(template).replace('-', ' ')}
                 </Badge>
               </div>
@@ -242,7 +247,9 @@ export default function TemplatesPage() {
                   Created {new Date(template.created_at).toLocaleDateString()}
                 </span>
                 {template.creator_user_id !== user.id && (
-                  <span className="rounded bg-muted px-2 py-1 text-xs">Shared</span>
+                  <span className="rounded bg-muted px-2 py-1 text-xs">
+                    Shared
+                  </span>
                 )}
               </div>
 
@@ -252,7 +259,11 @@ export default function TemplatesPage() {
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {template.template_locales?.map(locale => (
-                    <Badge key={locale.id} variant="secondary" className="text-xs">
+                    <Badge
+                      key={locale.id}
+                      variant="secondary"
+                      className="text-xs"
+                    >
                       <span className="mr-1">
                         {getSupportedLocaleFlag(locale.locale)}
                       </span>

@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 
 import {
   Select,
@@ -18,20 +18,24 @@ export function BrandSelector({
   brands,
   selectedBrandSlug,
 }: BrandSelectorProps) {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
 
   function handleSelectBrand(value: string) {
-    const params = new URLSearchParams(searchParams);
-
-    if (value === 'all') {
-      params.delete('brand');
-    } else {
-      params.set('brand', value);
-    }
-
-    const query = params.toString();
-    navigate(query ? `?${query}` : '.', { replace: true });
+    setSearchParams(
+      prev => {
+        const next: Record<string, string> = {};
+        prev.forEach((paramValue, key) => {
+          if (key !== 'brand') {
+            next[key] = paramValue;
+          }
+        });
+        if (value !== 'all') {
+          next.brand = value;
+        }
+        return next;
+      },
+      { replace: true }
+    );
   }
 
   return (

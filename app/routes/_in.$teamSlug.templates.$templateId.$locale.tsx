@@ -12,10 +12,12 @@ import LocaleTabs from '~/components/LocaleTabs';
 import { appService } from '../services/app';
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const loaderData = data as Awaited<ReturnType<typeof loader>> | undefined;
+
   return [
     {
-      title: data?.template
-        ? `${data.template.title} - ${appService.strings.app.title}`
+      title: loaderData?.template
+        ? `${loaderData.template.title} - ${appService.strings.app.title}`
         : `Template - ${appService.strings.app.title}`,
     },
   ];
